@@ -5,35 +5,16 @@ import PlanetsContext from './context/PlanetContext';
 import { FormValuesType, PlanetType } from './types';
 import PlanetsTableList from './components/PlanetsTableList';
 
-const switchCases = (
-  comparison: string,
-  column: string | string[],
-  valueFilter: number,
-) => {
-  if (Array.isArray(column)) {
-    return column.some((value) => {
-      if (comparison === 'maior que') {
-        return Number(value) > valueFilter;
-      }
-      if (comparison === 'menor que') {
-        return Number(value) < valueFilter;
-      }
-      if (comparison === 'igual a') {
-        return Number(value) === valueFilter;
-      }
-      return false;
-    });
-  }
+const switchCases = (comparison: string, column: string, valueFilter: number) => {
   if (comparison === 'maior que') {
-    return Number(column) > valueFilter;
+    return Number(column) > Number(valueFilter);
   }
   if (comparison === 'menor que') {
-    return Number(column) < valueFilter;
+    return Number(column) < Number(valueFilter);
   }
   if (comparison === 'igual a') {
-    return Number(column) === valueFilter;
+    return Number(column) === Number(valueFilter);
   }
-  return false;
 };
 
 function App() {
