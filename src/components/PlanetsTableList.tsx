@@ -1,8 +1,7 @@
 import { useContext } from 'react';
 import PlanetsContext from '../context/PlanetContext';
-
 import useFormValues from '../hooks/useForm';
-import { PlanetType } from '../types';
+import { FormValuesType } from '../types';
 
 const INITIAL_VALUES = {
   column: 'population',
@@ -10,20 +9,21 @@ const INITIAL_VALUES = {
   valueFilter: 0,
 };
 
-type FormValuesType = {
-  column: string;
-  comparison: string;
-  valueFilter: number;
-};
-
 function PlanetsTableList() {
   const planetsContext = useContext(PlanetsContext);
-  const { setNameFilter, filteredPlanets } = planetsContext;
-  const { values, handleChange } = useFormValues(INITIAL_VALUES as FormValuesType);
 
-  const columns: string[] = [
-    'population', 'orbital_period', 'diameter', 'rotation_period', 'surface_water',
-  ];
+  const {
+    setNameFilter,
+    filteredPlanets,
+    setColumnFilter,
+    columnFilter,
+  } = planetsContext;
+
+  const {
+    values,
+    handleChange,
+    resetForm,
+  } = useFormValues(INITIAL_VALUES as FormValuesType);
 
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { value } = event.target;
@@ -32,20 +32,20 @@ function PlanetsTableList() {
 
   const handleFormSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const { column, comparison, valueFilter } = values;
-    const filtered = planetsContext.filteredPlanets.filter((planet) => {
-      switch (comparison) {
-        case 'maior que':
-          return Number(planet[column]) > Number(valueFilter);
-        case 'menor que':
-          return Number(planet[column]) < Number(valueFilter);
-        case 'igual a':
-          return Number(planet[column]) === Number(valueFilter);
-        default:
-          return false;
-      }
-    });
-    planetsContext.setFilteredPlanets(filtered);
+    setColumnFilter([
+      ...columnFilter || [],
+      values,
+    ]);
+    resetForm();
+  };
+
+  const handleDeleteFilter = (column: string) => {
+    const newColumnFilter = columnFilter?.filter((c) => c.column !== column);
+    setColumnFilter(newColumnFilter);
+  };
+
+  const handleDeleteAllFilters = () => {
+    setColumnFilter([]);
   };
 
   return (
@@ -69,11 +69,20 @@ function PlanetsTableList() {
             value={ values.column }
             onChange={ handleChange }
           >
-            {columns.map((column) => (
-              <option key={ column } value={ column }>
-                {column}
-              </option>
-            ))}
+            {!columnFilter?.find((c) => c.column === 'population')
+              && <option value="population">population</option>}
+
+            {!columnFilter?.find((c) => c.column === 'orbital_period')
+              && <option value="orbital_period">orbital_period</option>}
+
+            {!columnFilter?.find((c) => c.column === 'diameter')
+              && <option value="diameter">diameter</option>}
+
+            {!columnFilter?.find((c) => c.column === 'rotation_period')
+              && <option value="rotation_period">rotation_period</option>}
+
+            {!columnFilter?.find((c) => c.column === 'surface_water')
+              && <option value="surface_water">surface_water</option>}
           </select>
         </label>
         <label htmlFor="comparison">
@@ -102,6 +111,34 @@ function PlanetsTableList() {
         </label>
         <button type="submit" data-testid="button-filter">Filtrar</button>
       </form>
+      <div>
+        {columnFilter?.map((c) => (
+          <div key={ c.column } data-testid="filter">
+            <span>
+              {c.column}
+              {' '}
+            </span>
+            <span>
+              {c.comparison}
+              {' '}
+            </span>
+            <span>{c.valueFilter}</span>
+            <button
+              onClick={ () => handleDeleteFilter(c.column) }
+            >
+              Apagar
+            </button>
+          </div>
+        ))}
+      </div>
+      <div>
+        <button
+          onClick={ handleDeleteAllFilters }
+          data-testid="button-remove-filters"
+        >
+          Deletar Todos Filtros
+        </button>
+      </div>
       <table>
         <thead>
           <tr>

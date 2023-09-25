@@ -13,3 +13,9 @@ export type PlanetType = {
   edited: string,
   url: string
 };
+
+export type FormValuesType = {
+  column: string;
+  comparison: string;
+  valueFilter: number;
+};

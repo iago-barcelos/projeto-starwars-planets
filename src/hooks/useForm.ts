@@ -16,9 +16,14 @@ const useForm = (initialValues: any) => {
     });
   };
 
+  const resetForm = () => {
+    setValues(initialValues);
+  };
+
   return {
     values,
     handleChange,
+    resetForm,
   };
 };
 
