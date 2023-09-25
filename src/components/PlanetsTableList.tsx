@@ -1,7 +1,16 @@
-import { useContext } from 'react';
+import React, { useContext } from 'react';
 import PlanetsContext from '../context/PlanetContext';
-import useFormValues from '../hooks/useForm';
+import useFormValues from '../hooks/useFormValues';
 import { FormValuesType } from '../types';
+import Table from './Table';
+
+interface PlanetSortType {
+  population: string;
+  orbital_period: string;
+  diameter: string;
+  rotation_period: string;
+  surface_water: string;
+}
 
 const INITIAL_VALUES = {
   column: 'population',
@@ -9,23 +18,36 @@ const INITIAL_VALUES = {
   valueFilter: 0,
 };
 
+const INITIAL_ORDENAR_VALUES = {
+  columnSort: 'population',
+  sort: 'ASC',
+};
+
+type OrdenarFormValuesType = {
+  columnSort: string;
+  sort: string;
+};
+
 function PlanetsTableList() {
   const planetsContext = useContext(PlanetsContext);
-
   const {
     setNameFilter,
     filteredPlanets,
+    setFilteredPlanets,
     setColumnFilter,
     columnFilter,
   } = planetsContext;
-
-  const {
+  const [
     values,
     handleChange,
     resetForm,
-  } = useFormValues(INITIAL_VALUES as FormValuesType);
+  ] = useFormValues(INITIAL_VALUES as FormValuesType);
+  const [
+    ordenarValues,
+    handleOrdenarChange,
+  ] = useFormValues(INITIAL_ORDENAR_VALUES as OrdenarFormValuesType);
 
-  const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleTextInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { value } = event.target;
     setNameFilter(value);
   };
@@ -37,6 +59,22 @@ function PlanetsTableList() {
       values,
     ]);
     resetForm();
+  };
+
+  const handleOrdenarSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const newFilteredPlanets = [...filteredPlanets];
+
+    newFilteredPlanets.sort((a: PlanetSortType, b: PlanetSortType) => {
+      const column = ordenarValues.columnSort as keyof PlanetSortType;
+      if (a[column] === 'unknown') return 1;
+      if (b[column] === 'unknown') return -1;
+      if (ordenarValues.sort === 'DESC') {
+        return Number(b[column]) - Number(a[column]);
+      }
+      return Number(a[column]) - Number(b[column]);
+    });
+    setFilteredPlanets(newFilteredPlanets);
   };
 
   const handleDeleteFilter = (column: string) => {
@@ -55,7 +93,7 @@ function PlanetsTableList() {
           data-testid="name-filter"
           id="text"
           name="text"
-          onChange={ handleInputChange }
+          onChange={ handleTextInputChange }
           type="text"
         />
       </div>
@@ -71,16 +109,12 @@ function PlanetsTableList() {
           >
             {!columnFilter?.find((c) => c.column === 'population')
               && <option value="population">population</option>}
-
             {!columnFilter?.find((c) => c.column === 'orbital_period')
               && <option value="orbital_period">orbital_period</option>}
-
             {!columnFilter?.find((c) => c.column === 'diameter')
               && <option value="diameter">diameter</option>}
-
             {!columnFilter?.find((c) => c.column === 'rotation_period')
               && <option value="rotation_period">rotation_period</option>}
-
             {!columnFilter?.find((c) => c.column === 'surface_water')
               && <option value="surface_water">surface_water</option>}
           </select>
@@ -111,6 +145,49 @@ function PlanetsTableList() {
         </label>
         <button type="submit" data-testid="button-filter">Filtrar</button>
       </form>
+      <form action="" onSubmit={ handleOrdenarSubmit }>
+        <label htmlFor="column-sort">
+          Ordenar
+          <select
+            id="column-sort"
+            name="columnSort"
+            data-testid="column-sort"
+            value={ ordenarValues.columnSort }
+            onChange={ handleOrdenarChange }
+          >
+            <option value="population">population</option>
+            <option value="orbital_period">orbital_period</option>
+            <option value="diameter">diameter</option>
+            <option value="rotation_period">rotation_period</option>
+            <option value="surface_water">surface_water</option>
+          </select>
+        </label>
+        <label htmlFor="ASC">
+          Ascendente
+          <input
+            type="radio"
+            name="sort"
+            id="ASC"
+            value="ASC"
+            checked={ ordenarValues.sort === 'ASC' }
+            onChange={ handleOrdenarChange }
+            data-testid="column-sort-input-asc"
+          />
+        </label>
+        <label htmlFor="DESC">
+          Descendente
+          <input
+            type="radio"
+            name="sort"
+            id="DESC"
+            value="DESC"
+            data-testid="column-sort-input-desc"
+            checked={ ordenarValues.sort === 'DESC' }
+            onChange={ handleOrdenarChange }
+          />
+        </label>
+        <button type="submit" data-testid="column-sort-button">Ordenar</button>
+      </form>
       <div>
         {columnFilter?.map((c) => (
           <div key={ c.column } data-testid="filter">
@@ -139,74 +216,7 @@ function PlanetsTableList() {
           Deletar Todos Filtros
         </button>
       </div>
-      <table>
-        <thead>
-          <tr>
-            <th>
-              Name
-            </th>
-            <th>
-              Rotation Period
-            </th>
-            <th>
-              Orbital Period
-            </th>
-            <th>
-              Diameter
-            </th>
-            <th>
-              Climate
-            </th>
-            <th>
-              Gravity
-            </th>
-            <th>
-              Terrain
-            </th>
-            <th>
-              Surface Water
-            </th>
-            <th>
-              Population
-            </th>
-            <th>
-              Films
-            </th>
-            <th>
-              Created
-            </th>
-            <th>
-              Edited
-            </th>
-            <th>
-              URL
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {filteredPlanets.map((planet) => (
-            <tr key={ planet.name }>
-              <td>{planet.name}</td>
-              <td>{planet.rotation_period}</td>
-              <td>{planet.orbital_period}</td>
-              <td>{planet.diameter}</td>
-              <td>{planet.climate}</td>
-              <td>{planet.gravity}</td>
-              <td>{planet.terrain}</td>
-              <td>{planet.surface_water}</td>
-              <td>{planet.population}</td>
-              <td>
-                {planet.films.map((film) => (
-                  <span key={ film }>{film}</span>
-                ))}
-              </td>
-              <td>{planet.created}</td>
-              <td>{planet.edited}</td>
-              <td>{planet.url}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <Table />
     </>
   );
 }

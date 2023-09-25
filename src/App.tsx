@@ -1,21 +1,39 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import './App.css';
 
 import PlanetsContext from './context/PlanetContext';
 import { FormValuesType, PlanetType } from './types';
 import PlanetsTableList from './components/PlanetsTableList';
 
-const switchCases = (comparison: string, column: string, valueFilter: number) => {
-  switch (comparison) {
-    case 'maior que':
-      return Number(column) > Number(valueFilter);
-    case 'menor que':
-      return Number(column) < Number(valueFilter);
-    case 'igual a':
-      return Number(column) === Number(valueFilter);
-    default:
+const switchCases = (
+  comparison: string,
+  column: string | string[],
+  valueFilter: number,
+) => {
+  if (Array.isArray(column)) {
+    return column.some((value) => {
+      if (comparison === 'maior que') {
+        return Number(value) > valueFilter;
+      }
+      if (comparison === 'menor que') {
+        return Number(value) < valueFilter;
+      }
+      if (comparison === 'igual a') {
+        return Number(value) === valueFilter;
+      }
       return false;
+    });
   }
+  if (comparison === 'maior que') {
+    return Number(column) > valueFilter;
+  }
+  if (comparison === 'menor que') {
+    return Number(column) < valueFilter;
+  }
+  if (comparison === 'igual a') {
+    return Number(column) === valueFilter;
+  }
+  return false;
 };
 
 function App() {
@@ -25,52 +43,17 @@ function App() {
   const [columnFilter, setColumnFilter] = useState<FormValuesType[]>();
 
   useEffect(() => {
-    const filtered = planets.filter((planet) => planet.name.includes(nameFilter))
-      .filter((planet) => {
-        const pFilter = columnFilter?.find((c) => c.column === 'population');
-        if (pFilter) {
-          return switchCases(pFilter.comparison, planet.population, pFilter.valueFilter);
-        }
-        return true;
-      }).filter((planet) => {
-        const orbPerFilter = columnFilter?.find((c) => c.column === 'orbital_period');
-        if (orbPerFilter) {
-          return switchCases(
-            orbPerFilter.comparison,
-            planet.orbital_period,
-            orbPerFilter.valueFilter,
-          );
-        }
-        return true;
-      }).filter((planet) => {
-        const dFilter = columnFilter?.find((c) => c.column === 'diameter');
-        if (dFilter) {
-          return switchCases(dFilter.comparison, planet.diameter, dFilter.valueFilter);
-        }
-        return true;
-      })
-      .filter((planet) => {
-        const rotPerFilter = columnFilter?.find((c) => c.column === 'rotation_period');
-        if (rotPerFilter) {
-          return switchCases(
-            rotPerFilter.comparison,
-            planet.rotation_period,
-            rotPerFilter.valueFilter,
-          );
-        }
-        return true;
-      })
-      .filter((planet) => {
-        const sWaterFilter = columnFilter?.find((c) => c.column === 'surface_water');
-        if (sWaterFilter) {
-          return switchCases(
-            sWaterFilter.comparison,
-            planet.surface_water,
-            sWaterFilter.valueFilter,
-          );
-        }
-        return true;
-      });
+    const filtered = planets.filter(
+      (planet: PlanetType) => planet.name.includes(nameFilter),
+    )
+      .filter((planet: PlanetType) => (columnFilter ? columnFilter.every((filter) => (
+        switchCases(
+          filter.comparison,
+          planet[filter.column as keyof PlanetType],
+          filter.valueFilter,
+        )
+      )) : true));
+    setFilteredPlanets(filtered);
   }, [nameFilter, planets, columnFilter]);
 
   useEffect(() => {
@@ -92,8 +75,11 @@ function App() {
         terrain: planet.terrain,
         url: planet.url,
       }));
+
       setPlanets(planetsData);
-    }; fetchPlanetsData();
+    };
+
+    fetchPlanetsData();
   }, []);
 
   return (
