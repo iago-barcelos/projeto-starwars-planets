@@ -44,6 +44,7 @@ function App() {
         filteredPlanets,
         planets,
         setNameFilter,
+        setFilteredPlanets,
       } }
     >
       <h1>Projeto Star Wars</h1>
